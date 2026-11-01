@@ -16,13 +16,17 @@ export default async function handler(req: any, res: any) {
 
     return app(req, res);
   } catch (err: any) {
-    console.error('Unhandled Vercel Function error in apps/api:', err);
+    console.error('Unhandled Vercel Function error in apps/api:', err.message);
+    const isDbError = err.message && (err.message.includes('MongoDB') || err.message.includes('MONGODB_URI'));
+    const statusCode = isDbError ? 503 : 500;
+    const errorCode = isDbError ? 'DATABASE_CONNECTION_ERROR' : 'SERVERLESS_FUNCTION_ERROR';
+
     if (!res.headersSent) {
-      res.status(500).json({
+      res.status(statusCode).json({
         success: false,
         error: {
-          code: 'SERVERLESS_FUNCTION_ERROR',
-          message: 'Internal server error occurred in serverless function handler',
+          code: errorCode,
+          message: err.message || 'Internal server error occurred in serverless function handler',
           timestamp: new Date().toISOString(),
         },
       });

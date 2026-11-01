@@ -1,7 +1,19 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
+// Load workspace .env as well as root .env if present
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
+const resolveMongoUri = (): string => {
+  const rawUri = process.env.MONGODB_URI?.trim().replace(/^["']|["']$/g, '');
+  if (rawUri) return rawUri;
+  // In production, do not silently fallback to localhost 127.0.0.1
+  if (process.env.NODE_ENV === 'production') {
+    return '';
+  }
+  return 'mongodb://127.0.0.1:27017/swap_db';
+};
 
 export const config = {
   env: process.env.NODE_ENV || 'development',
@@ -9,8 +21,7 @@ export const config = {
   apiUrl: process.env.API_URL || 'http://localhost:5000',
   webUrl: process.env.CLIENT_URL || process.env.WEB_URL || 'http://localhost:3000',
 
-  mongodbUri:
-    process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/swap_db',
+  mongodbUri: resolveMongoUri(),
 
   redis: {
     url: process.env.REDIS_URL,

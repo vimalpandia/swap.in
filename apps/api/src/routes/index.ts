@@ -18,16 +18,40 @@ import { sendSuccess } from '../utils/response';
 
 const router = Router();
 
-// Health check
-router.get('/health', (_req, res) => {
-  const isDbConnected = mongoose.connection.readyState === 1;
-  return sendSuccess(res, {
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    service: 'Swap Social API',
-    tagline: 'Swap moments. Swap vibes.',
-    database: isDbConnected ? 'connected' : 'connecting_or_standalone',
-    uptime: Math.round(process.uptime()),
+// Safe database & API health check
+router.get('/health', async (_req, res) => {
+  const dbReadyState = mongoose.connection.readyState;
+  let isPingOk = false;
+  let dbLatencyMs: number | null = null;
+
+  if (dbReadyState === 1 && mongoose.connection.db) {
+    try {
+      const start = Date.now();
+      await mongoose.connection.db.admin().ping();
+      dbLatencyMs = Date.now() - start;
+      isPingOk = true;
+    } catch {
+      isPingOk = false;
+    }
+  }
+
+  const isHealthy = dbReadyState === 1 && isPingOk;
+
+  return res.status(isHealthy ? 200 : 503).json({
+    success: isHealthy,
+    data: {
+      status: isHealthy ? 'healthy' : 'degraded',
+      timestamp: new Date().toISOString(),
+      service: 'Swap Social API',
+      tagline: 'Swap moments. Swap vibes.',
+      database: {
+        status: dbReadyState === 1 ? 'connected' : 'disconnected',
+        connected: dbReadyState === 1,
+        ping: isPingOk ? 'pong' : 'failed',
+        latencyMs: dbLatencyMs,
+      },
+      uptime: Math.round(process.uptime()),
+    },
   });
 });
 

@@ -55,24 +55,47 @@ app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Root health check for Render free-tier keep-alive pings & load balancers
-app.get('/health', (_req, res) => {
+// Safe database & API health check endpoint (never exposes credentials or connection strings)
+app.get('/health', async (_req, res) => {
   const dbStates: Record<number, string> = {
     0: 'disconnected',
     1: 'connected',
     2: 'connecting',
     3: 'disconnecting',
   };
-  const dbStatus = dbStates[mongoose.connection.readyState] || 'unknown';
+  const dbReadyState = mongoose.connection.readyState;
+  let isPingOk = false;
+  let dbLatencyMs: number | null = null;
 
-  return sendSuccess(res, {
-    status: 'healthy',
-    service: 'Swap Social API',
-    tagline: 'Swap moments. Swap vibes.',
-    database: dbStatus,
-    uptime: Math.round(process.uptime()),
-    timestamp: new Date().toISOString(),
-    environment: config.env,
+  if (dbReadyState === 1 && mongoose.connection.db) {
+    try {
+      const start = Date.now();
+      await mongoose.connection.db.admin().ping();
+      dbLatencyMs = Date.now() - start;
+      isPingOk = true;
+    } catch {
+      isPingOk = false;
+    }
+  }
+
+  const isHealthy = dbReadyState === 1 && isPingOk;
+
+  return res.status(isHealthy ? 200 : 503).json({
+    success: isHealthy,
+    data: {
+      status: isHealthy ? 'healthy' : 'degraded',
+      service: 'Swap Social API',
+      tagline: 'Swap moments. Swap vibes.',
+      database: {
+        status: dbStates[dbReadyState] || 'unknown',
+        connected: dbReadyState === 1,
+        ping: isPingOk ? 'pong' : 'failed',
+        latencyMs: dbLatencyMs,
+      },
+      uptime: Math.round(process.uptime()),
+      timestamp: new Date().toISOString(),
+      environment: config.env,
+    },
   });
 });
 
