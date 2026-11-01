@@ -61,7 +61,27 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
       }
     });
 
+    // Periodic fallback polling when running on pure Vercel serverless without persistent socket connection
+    const pollInterval = setInterval(() => {
+      if (!socket.connected) {
+        api
+          .get(`/chat/conversations/${conversation.id}/messages`)
+          .then((res) => {
+            if (res.data.success && res.data.data.items) {
+              setMessages((prev) => {
+                if (res.data.data.items.length !== prev.length) {
+                  return res.data.data.items;
+                }
+                return prev;
+              });
+            }
+          })
+          .catch(() => {});
+      }
+    }, 4500);
+
     return () => {
+      clearInterval(pollInterval);
       socket.emit('leave_conversation', conversation.id);
       socket.off('new_message');
       socket.off('user_typing');

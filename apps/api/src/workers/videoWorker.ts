@@ -4,7 +4,8 @@ import { logger } from '../config/logger';
 import { redisClient } from '../config/redis';
 
 export function startWorkers() {
-  if (config.isTest) return;
+  // Do not run background queue polling in test or Vercel serverless functions
+  if (config.isTest || process.env.VERCEL) return;
 
   // Only start workers if Redis is actually connected to avoid connection retry loops
   if (redisClient.status !== 'ready' && redisClient.status !== 'connect') {
