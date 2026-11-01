@@ -1,0 +1,19 @@
+{
+  "name": "Swap - Swap moments. Swap vibes.",
+  "short_name": "Swap",
+  "description": "Next-generation social media platform with Waste of Time reels, Swap Challenges, Swap Day, and Vibe Swap.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090A10",
+  "theme_color": "#4F46E5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

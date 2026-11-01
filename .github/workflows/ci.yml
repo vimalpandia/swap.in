@@ -1,0 +1,74 @@
+name: Swap CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate-and-test:
+    name: Lint, Typecheck & Comprehensive Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Monorepo Dependencies
+        run: npm ci
+
+      - name: Build Shared Package
+        run: npm run build:shared
+
+      - name: Run Backend Integration Tests (Jest + mongodb-memory-server)
+        run: npm run test:api
+        env:
+          NODE_ENV: test
+          JWT_ACCESS_SECRET: swap_test_access_secret_super_secure_key_32_chars!
+          JWT_REFRESH_SECRET: swap_test_refresh_secret_super_secure_key_32_chars!
+
+      - name: Run Frontend Tests (Vitest)
+        run: npm run test:web
+
+      - name: Build Backend (TypeScript)
+        run: npm run build:api
+
+      - name: Build Frontend (Next.js 14)
+        run: npm run build:web
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:5000/api/v1
+          NEXT_PUBLIC_SOCKET_URL: http://localhost:5000
+
+  docker-build:
+    name: Docker Image Verification
+    needs: validate-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/api/Dockerfile
+          push: false
+          tags: swap/api:latest
+
+      - name: Build Web Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/web/Dockerfile
+          push: false
+          tags: swap/web:latest

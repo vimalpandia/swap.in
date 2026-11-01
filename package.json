@@ -1,0 +1,36 @@
+{
+  "name": "swap-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Swap - Production-quality social media web app with Waste of Time reels, Swap Challenges, Swap Day, and Vibe Swap",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build:shared": "npm run build --workspace=packages/shared",
+    "build:api": "npm run build --workspace=apps/api",
+    "build:web": "npm run build --workspace=apps/web",
+    "build": "npm run build:shared && npm run build:api && npm run build:web",
+    "test:api": "npm run test --workspace=apps/api",
+    "test:web": "npm run test --workspace=apps/web",
+    "test": "npm run test:api && npm run test:web",
+    "seed": "npm run seed --workspace=apps/api",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "keywords": [
+    "social-media",
+    "swap",
+    "nextjs",
+    "express",
+    "socketio",
+    "mongoose",
+    "mongodb",
+    "redis",
+    "reels"
+  ],
+  "author": "Swap Engineering Team",
+  "license": "MIT"
+}
