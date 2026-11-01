@@ -1,5 +1,5 @@
-import app from './apps/api/src/app';
-import { connectDatabase } from './apps/api/src/config/database';
+import app from '../apps/api/src/app';
+import { connectDatabase } from '../apps/api/src/config/database';
 
 /**
  * Vercel Serverless Function Handler for SWAP REST API.
@@ -13,7 +13,7 @@ export default async function handler(req: any, res: any) {
 
     // 2. Normalize URL if routed through Vercel rewrites
     const matchedPath = req.headers['x-matched-path'] || req.headers['x-forwarded-uri'];
-    if (matchedPath && typeof matchedPath === 'string' && (matchedPath.startsWith('/api/v1') || matchedPath.startsWith('/health'))) {
+    if (matchedPath && typeof matchedPath === 'string' && (matchedPath.startsWith('/api/v1') || matchedPath.startsWith('/v1') || matchedPath.startsWith('/health'))) {
       req.url = matchedPath;
     }
 

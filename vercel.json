@@ -2,11 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "npm run build:shared && npm run build:web",
+  "buildCommand": "npm run build:shared && npm run build:api && npm run build:web",
   "outputDirectory": "apps/web/.next",
   "functions": {
     "api/index.ts": {
-      "memory": 1024,
       "maxDuration": 10
     }
   },

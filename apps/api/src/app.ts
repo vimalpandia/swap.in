@@ -56,7 +56,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Safe database & API health check endpoint (never exposes credentials or connection strings)
-app.get('/health', async (_req, res) => {
+app.get(['/health', '/api/health'], async (_req, res) => {
   const dbStates: Record<number, string> = {
     0: 'disconnected',
     1: 'connected',
@@ -105,8 +105,9 @@ app.use('/api', globalRateLimiter);
 // API Documentation
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-// API Routes
+// API Routes (supports /api/v1 as well as rewritten /v1 serverless paths)
 app.use('/api/v1', apiRoutes);
+app.use('/v1', apiRoutes);
 
 // Centralized Error Handling
 app.use(errorHandler);

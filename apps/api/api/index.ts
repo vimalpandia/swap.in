@@ -10,7 +10,7 @@ export default async function handler(req: any, res: any) {
     await connectDatabase();
 
     const matchedPath = req.headers['x-matched-path'] || req.headers['x-forwarded-uri'];
-    if (matchedPath && typeof matchedPath === 'string' && (matchedPath.startsWith('/api/v1') || matchedPath.startsWith('/health'))) {
+    if (matchedPath && typeof matchedPath === 'string' && (matchedPath.startsWith('/api/v1') || matchedPath.startsWith('/v1') || matchedPath.startsWith('/health'))) {
       req.url = matchedPath;
     }
 
