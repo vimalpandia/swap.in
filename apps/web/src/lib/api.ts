@@ -5,9 +5,9 @@ const getBaseApiUrl = (): string => {
     const raw = process.env.NEXT_PUBLIC_API_URL;
     return raw.endsWith('/api/v1') ? raw : `${raw.replace(/\/+$/, '')}/api/v1`;
   }
-  // In production browser environments where NEXT_PUBLIC_API_URL is omitted,
+  // In production environments (both SSR and browser) where NEXT_PUBLIC_API_URL is omitted,
   // use relative '/api/v1' for same-origin Vercel deployment with zero CORS issues
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production') {
     return '/api/v1';
   }
   // Local development default
@@ -24,9 +24,13 @@ export const api = axios.create({
   },
 });
 
-// Interceptor to attach access token
+// Interceptor to attach access token and safeguard production baseURL
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
+    // Safety check: ensure production client requests NEVER accidentally target localhost
+    if (process.env.NODE_ENV === 'production' && config.baseURL?.includes('localhost:5000')) {
+      config.baseURL = '/api/v1';
+    }
     const token = localStorage.getItem('swap_access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

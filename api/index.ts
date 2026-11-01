@@ -11,10 +11,25 @@ export default async function handler(req: any, res: any) {
     // 1. Ensure database connection is active (cached across warm function invocations)
     await connectDatabase();
 
-    // 2. Normalize URL if routed through Vercel rewrites
-    const matchedPath = req.headers['x-matched-path'] || req.headers['x-forwarded-uri'];
+    // 2. Normalize URL if routed through Vercel rewrites or query parameter
+    const matchedPath =
+      (req.query?.__path as string) ||
+      req.headers['x-matched-path'] ||
+      req.headers['x-forwarded-uri'];
+
     if (matchedPath && typeof matchedPath === 'string' && (matchedPath.startsWith('/api/v1') || matchedPath.startsWith('/v1') || matchedPath.startsWith('/health'))) {
       req.url = matchedPath;
+    }
+
+    // Direct root handler for API health inspection
+    if (req.url === '/' || req.url === '/api') {
+      return res.status(200).json({
+        status: 'online',
+        service: 'SWAP Serverless API Gateway',
+        tagline: 'Swap moments. Swap vibes.',
+        database: 'connected',
+        timestamp: new Date().toISOString(),
+      });
     }
 
     // 3. Delegate to Express app

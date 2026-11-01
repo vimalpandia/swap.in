@@ -27,7 +27,28 @@ export default function LoginPage() {
         router.push('/');
       }
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Invalid credentials');
+      const errorObj = err.response?.data?.error;
+      let errorMsg = errorObj?.message;
+      if (errorObj?.details && Array.isArray(errorObj.details) && errorObj.details.length > 0) {
+        errorMsg = errorObj.details.map((d: any) => d.message || `${d.field}: invalid`).join(', ');
+      }
+      if (!errorMsg && err.response?.status) {
+        if (err.response.status === 404) {
+          errorMsg = 'API endpoint not reachable (404). Please check deployment routing.';
+        } else if (err.response.status === 503) {
+          errorMsg = 'Database connection unavailable (503). Verify MongoDB Atlas configuration.';
+        } else {
+          errorMsg = `Server error (${err.response.status}): ${err.response.statusText || 'Request failed'}`;
+        }
+      }
+      if (!errorMsg && err.message) {
+        if (err.message.includes('Network Error')) {
+          errorMsg = 'Network error: Cannot reach SWAP API server. Verify backend status and CORS.';
+        } else {
+          errorMsg = err.message;
+        }
+      }
+      setError(errorMsg || 'Invalid username or password.');
     } finally {
       setIsLoading(false);
     }

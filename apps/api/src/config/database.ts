@@ -48,8 +48,6 @@ export async function connectDatabase(): Promise<typeof mongoose> {
       // Restrict connection pool size in serverless to prevent exhausting Atlas connection limits
       maxPoolSize: config.isProduction ? 10 : 20,
       minPoolSize: 0,
-      // Fail fast on operations if disconnected
-      bufferCommands: false,
       autoIndex: !config.isProduction,
     };
 

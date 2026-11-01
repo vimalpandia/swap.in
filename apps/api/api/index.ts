@@ -9,9 +9,23 @@ export default async function handler(req: any, res: any) {
   try {
     await connectDatabase();
 
-    const matchedPath = req.headers['x-matched-path'] || req.headers['x-forwarded-uri'];
+    const matchedPath =
+      (req.query?.__path as string) ||
+      req.headers['x-matched-path'] ||
+      req.headers['x-forwarded-uri'];
+
     if (matchedPath && typeof matchedPath === 'string' && (matchedPath.startsWith('/api/v1') || matchedPath.startsWith('/v1') || matchedPath.startsWith('/health'))) {
       req.url = matchedPath;
+    }
+
+    if (req.url === '/' || req.url === '/api') {
+      return res.status(200).json({
+        status: 'online',
+        service: 'SWAP Serverless API Gateway',
+        tagline: 'Swap moments. Swap vibes.',
+        database: 'connected',
+        timestamp: new Date().toISOString(),
+      });
     }
 
     return app(req, res);
